@@ -107,22 +107,28 @@
 
 <div class="grid" id="grid"></div>
 
+<!-- Audio for BINGO -->
+<audio id="bingoSound" src="https://www.myinstants.com/media/sounds/bingo.mp3"></audio>
+
 <script>
     const SIZE = 5;
     let cells = [];
     let completedLines = new Set();
+    window.bingoAnnounced = false;
 
     function generateBoard() {
         const grid = document.getElementById("grid");
         grid.innerHTML = "";
         cells = [];
         completedLines.clear();
+        window.bingoAnnounced = false;
 
         document.querySelectorAll('.letter')
             .forEach(l => l.classList.remove('active'));
 
         let numbers = Array.from({ length: 25 }, (_, i) => i + 1);
 
+        // Shuffle
         for (let i = numbers.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
             [numbers[i], numbers[j]] = [numbers[j], numbers[i]];
@@ -145,13 +151,14 @@
 
     function checkCompletedLines() {
         cells.forEach(c => c.classList.remove("completed"));
-
         let lines = [];
 
+        // Rows
         for (let r = 0; r < SIZE; r++) {
             lines.push([...Array(SIZE)].map((_, c) => r * SIZE + c));
         }
 
+        // Columns
         for (let c = 0; c < SIZE; c++) {
             lines.push([...Array(SIZE)].map((_, r) => r * SIZE + c));
         }
@@ -172,8 +179,22 @@
             document.getElementById(id)
                 .classList.toggle('active', completedLines.size > i);
         });
+
+        // Announce winner when all letters are active
+        if (completedLines.size >= 5 && !window.bingoAnnounced) {
+            window.bingoAnnounced = true;
+
+            // Play sound
+            const audio = document.getElementById('bingoSound');
+            audio.currentTime = 0;
+            audio.play().catch(() => console.log("User interaction required for audio"));
+
+            // Popup alert
+            alert("BINGO! 🎉");
+        }
     }
 
+    // Auto-generate board on load
     generateBoard();
 </script>
 
