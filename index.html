@@ -1,46 +1,104 @@
-<!-- Audio -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bingo 5×5</title>
+<style>
+body {
+    font-family: Arial, sans-serif;
+    background: #f2f2f2;
+    text-align: center;
+    margin: 0;
+    padding: 15px;
+}
+h1 { margin: 10px 0; }
+.bingo { display: flex; justify-content: center; gap: 10px; margin-bottom: 15px; }
+.letter {
+    width: 46px; height: 46px;
+    border-radius: 50%;
+    border: 2px solid #333;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px; font-weight: bold; background: white;
+}
+.letter.active { background: #e53935; color: white; border-color: #e53935; }
+button {
+    padding: 12px 20px; font-size: 16px; margin-bottom: 15px;
+    border-radius: 8px; border: none; background: #333; color: white; cursor: pointer;
+}
+.grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 8px;
+    max-width: 360px;
+    margin: auto;
+}
+.cell {
+    background: white; border: 2px solid #333; border-radius: 10px;
+    font-size: 22px; font-weight: bold; aspect-ratio: 1/1;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; user-select: none; transition: 0.2s;
+}
+.cell.marked { background: #4caf50; color: white; text-decoration: line-through; }
+.cell.completed { background: #ff9800; color: white; }
+</style>
+</head>
+<body>
+
+<h1>BINGO</h1>
+<div class="bingo">
+    <div class="letter" id="b">B</div>
+    <div class="letter" id="i">I</div>
+    <div class="letter" id="n">N</div>
+    <div class="letter" id="g">G</div>
+    <div class="letter" id="o">O</div>
+</div>
+<button onclick="generateBoard()">New Board</button>
+<div class="grid" id="grid"></div>
+
+<!-- Audio for Bingo -->
 <audio id="bingoSound" src="https://www.myinstants.com/media/sounds/bingo.mp3"></audio>
 
 <script>
+document.addEventListener('DOMContentLoaded', function() {
     const SIZE = 5;
     let cells = [];
     let completedLines = new Set();
-    window.bingoAnnounced = false;
-    let audioEnabled = false; // Safari requires user tap
+    let bingoAnnounced = false;
+    let audioEnabled = false;
+
+    const audio = document.getElementById('bingoSound');
 
     function generateBoard() {
         const grid = document.getElementById("grid");
         grid.innerHTML = "";
         cells = [];
         completedLines.clear();
-        window.bingoAnnounced = false;
+        bingoAnnounced = false;
         audioEnabled = false;
 
         document.querySelectorAll('.letter').forEach(l => l.classList.remove('active'));
 
-        let numbers = Array.from({ length: 25 }, (_, i) => i + 1);
-        // Shuffle
-        for (let i = numbers.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [numbers[i], numbers[j]] = [numbers[j], numbers[i]];
+        let numbers = Array.from({length:25}, (_, i) => i+1);
+        for(let i=numbers.length-1;i>0;i--){
+            const j=Math.floor(Math.random()*(i+1));
+            [numbers[i],numbers[j]]=[numbers[j],numbers[i]];
         }
 
-        numbers.forEach((num) => {
+        numbers.forEach(num=>{
             const div = document.createElement("div");
             div.className = "cell";
             div.textContent = num;
 
-            div.onclick = () => {
-                // First tap unlocks audio
-                if (!audioEnabled) {
-                    document.getElementById('bingoSound').play().catch(()=>{});
-                    document.getElementById('bingoSound').pause();
-                    audioEnabled = true;
+            div.addEventListener('click',()=>{
+                // Unlock audio on first tap
+                if(!audioEnabled){
+                    audio.play().catch(()=>{}); audio.pause();
+                    audioEnabled=true;
                 }
-
                 div.classList.toggle("marked");
                 checkCompletedLines();
-            };
+            });
 
             cells.push(div);
             grid.appendChild(div);
@@ -48,22 +106,19 @@
     }
 
     function checkCompletedLines() {
-        cells.forEach(c => c.classList.remove("completed"));
+        cells.forEach(c=>c.classList.remove("completed"));
         let lines = [];
 
-        // Rows
-        for (let r = 0; r < SIZE; r++) {
-            lines.push([...Array(SIZE)].map((_, c) => r * SIZE + c));
+        for(let r=0;r<SIZE;r++){
+            lines.push([...Array(SIZE)].map((_,c)=>r*SIZE+c));
+        }
+        for(let c=0;c<SIZE;c++){
+            lines.push([...Array(SIZE)].map((_,r)=>r*SIZE+c));
         }
 
-        // Columns
-        for (let c = 0; c < SIZE; c++) {
-            lines.push([...Array(SIZE)].map((_, r) => r * SIZE + c));
-        }
-
-        lines.forEach((line, index) => {
-            if (line.every(i => cells[i].classList.contains("marked"))) {
-                line.forEach(i => cells[i].classList.add("completed"));
+        lines.forEach((line,index)=>{
+            if(line.every(i=>cells[i].classList.contains("marked"))){
+                line.forEach(i=>cells[i].classList.add("completed"));
                 completedLines.add(index);
             }
         });
@@ -71,19 +126,16 @@
         updateBingoLetters();
     }
 
-    function updateBingoLetters() {
-        const letters = ['b','i','n','g','o'];
+    function updateBingoLetters(){
+        const letters=['b','i','n','g','o'];
         letters.forEach((id,i)=>{
-            document.getElementById(id)
-                    .classList.toggle('active',completedLines.size>i);
+            document.getElementById(id).classList.toggle('active', completedLines.size>i);
         });
 
-        if (completedLines.size >=5 && !window.bingoAnnounced) {
-            window.bingoAnnounced = true;
-            // Play sound only if audio is unlocked
-            if (audioEnabled) {
-                const audio = document.getElementById('bingoSound');
-                audio.currentTime = 0;
+        if(completedLines.size>=5 && !bingoAnnounced){
+            bingoAnnounced=true;
+            if(audioEnabled){
+                audio.currentTime=0;
                 audio.play().catch(()=>console.log("Audio blocked"));
             }
             alert("BINGO! 🎉");
@@ -91,4 +143,8 @@
     }
 
     generateBoard();
+});
 </script>
+
+</body>
+</html>
