@@ -15,6 +15,7 @@ button {padding:12px 20px; font-size:16px; margin-bottom:15px; border-radius:8px
 .cell {background:white; border:2px solid #333; border-radius:10px; font-size:22px; font-weight:bold; aspect-ratio:1/1; display:flex; align-items:center; justify-content:center; cursor:pointer; user-select:none; transition:0.2s;}
 .cell.marked {background:#4caf50; color:white; text-decoration:line-through;}
 .cell.completed {background:#ff9800; color:white;}
+#bingoMessage {font-size:28px; color:#ff9800; margin-top:15px; font-weight:bold;}
 </style>
 </head>
 <body>
@@ -29,6 +30,7 @@ button {padding:12px 20px; font-size:16px; margin-bottom:15px; border-radius:8px
 </div>
 <button onclick="generateBoard()">New Board</button>
 <div class="grid" id="grid"></div>
+<div id="bingoMessage"></div>
 
 <audio id="bingoSound" src="sound-effect-bingo-122339.mp3"></audio>
 
@@ -51,6 +53,7 @@ document.addEventListener('DOMContentLoaded', function() {
         bingoAnnounced = false;
         audioEnabled = false;
         document.querySelectorAll('.letter').forEach(l => l.classList.remove('active'));
+        document.getElementById('bingoMessage').textContent = ''; // clear previous message
 
         let numbers = Array.from({length:25}, (_,i)=>i+1);
         for(let i=numbers.length-1;i>0;i--){
@@ -63,7 +66,6 @@ document.addEventListener('DOMContentLoaded', function() {
             div.className='cell';
             div.textContent=num;
             div.addEventListener('click', ()=>{
-                // Unlock audio on first tap
                 if(!audioEnabled){ audio.play().catch(()=>{}); audio.pause(); audioEnabled=true; }
                 div.classList.toggle('marked'); checkCompletedLines();
             });
@@ -90,10 +92,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function updateBingoLetters(){
         ['b','i','n','g','o'].forEach((id,i)=>document.getElementById(id).classList.toggle('active', completedLines.size>i));
+        const msg = document.getElementById('bingoMessage');
         if(completedLines.size>=5 && !bingoAnnounced){
             bingoAnnounced=true;
             if(audioEnabled){ audio.currentTime=0; audio.play().catch(()=>console.log("Audio blocked")); }
-            alert("BINGO! 🎉");
+            msg.textContent = "🎉 BINGO! 🎉"; // show message on page instead of alert
         }
     }
 
