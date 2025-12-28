@@ -1,222 +1,309 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Sumith's Bingo</title>
-<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600&display=swap" rel="stylesheet">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Sumith’s Bingo</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600&display=swap" rel="stylesheet">
+
 <style>
+/* =====================
+   THEME VARIABLES
+   ===================== */
 :root {
-    --bg-color: #f2f2f2;
-    --card-color: #ffffff;
-    --cell-color: #ffffff;
-    --cell-hover: #e0e0e0;
-    --letter-color: #e53935;
-    --letter-bg: #ffffff;
-    --button-bg: #333;
-    --button-color: #fff;
+  --bg: linear-gradient(135deg, #fde2e4, #fadadd);
+  --card: #ffffff;
+  --cell: #ffffff;
+  --border: #e8e8e8;
+
+  --marked: #e6dbff;   /* lavender */
+  --complete: #c8f7dc; /* green */
+
+  --accent: #f48fb1;
+  --accent-dark: #ec407a;
+  --text: #444;
+  --shadow: 0 12px 30px rgba(0,0,0,0.08);
 }
-body { font-family: 'Montserrat', sans-serif; background: var(--bg-color); text-align:center; margin:0; padding:15px; overflow-x:hidden;}
-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;}
-h1 { margin:0; font-size:28px; }
-select { padding:6px 10px; border-radius:8px; border:1px solid #ccc; font-size:14px; }
-.bingo {display:flex; justify-content:center; gap:10px; margin-bottom:15px;}
-.letter {width:46px; height:46px; border-radius:50%; border:2px solid #333; display:flex; align-items:center; justify-content:center; font-size:22px; font-weight:bold; background: var(--letter-bg); color: var(--letter-color); transition:0.3s;}
-.letter.active {background: var(--letter-color); color: #fff; border-color: var(--letter-color);}
-button {padding:12px 20px; font-size:16px; margin-bottom:15px; border-radius:12px; border:none; background: var(--button-bg); color: var(--button-color); cursor:pointer; transition:0.3s;}
-button:hover {opacity:0.9;}
-.grid {display:grid; grid-template-columns:repeat(5,1fr); gap:8px; max-width:360px; margin:auto; background: var(--card-color); padding:8px; border-radius:16px; box-shadow:0 4px 10px rgba(0,0,0,0.1);}
-.cell {background: var(--cell-color); border:2px solid #333; border-radius:12px; font-size:22px; font-weight:bold; aspect-ratio:1/1; display:flex; align-items:center; justify-content:center; cursor:pointer; user-select:none; transition:0.3s, transform 0.1s;}
-.cell:hover {background: var(--cell-hover); transform:scale(1.05);}
-.cell.marked {background:#4caf50; color:white; text-decoration:line-through;}
-.cell.completed {background:#ff9800; color:white;}
-#bingoMessage {font-size:28px; color:#ff9800; margin-top:15px; font-weight:bold; opacity:0; transition:0.5s;}
-#bingoMessage.show {opacity:1; animation:fadeIn 0.8s;}
-@keyframes fadeIn {0%{opacity:0; transform:translateY(-10px);}100%{opacity:1; transform:translateY(0);}}
-canvas.confetti-canvas {position:fixed; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:9999;}
+
+/* =====================
+   BASE LAYOUT
+   ===================== */
+body {
+  margin: 0;
+  font-family: 'Poppins', sans-serif;
+  background: var(--bg);
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+}
+
+.app {
+  width: 100%;
+  max-width: 420px;
+  padding: 16px;
+}
+
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+h1 {
+  margin: 6px 0;
+  color: var(--text);
+}
+
+select {
+  padding: 6px 10px;
+  border-radius: 12px;
+  border: none;
+  font-family: inherit;
+}
+
+/* =====================
+   BINGO LETTERS
+   ===================== */
+.bingo {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin: 12px 0;
+}
+
+.letter {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #fff;
+  border: 2px solid var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.letter.active {
+  background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+  color: #fff;
+}
+
+/* =====================
+   CARD & GRID
+   ===================== */
+.card {
+  background: var(--card);
+  border-radius: 20px;
+  padding: 14px;
+  box-shadow: var(--shadow);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 10px;
+}
+
+.cell {
+  aspect-ratio: 1;
+  background: var(--cell);
+  border-radius: 14px;
+  border: 2px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text);
+  cursor: pointer;
+  transition: 0.25s;
+}
+
+.cell:active { transform: scale(0.95); }
+
+.cell.marked {
+  background: var(--marked);
+}
+
+.cell.completed {
+  background: var(--complete);
+}
+
+/* =====================
+   CONTROLS
+   ===================== */
+.controls {
+  text-align: center;
+  margin-top: 14px;
+}
+
+button {
+  padding: 12px 24px;
+  font-size: 16px;
+  border-radius: 30px;
+  border: none;
+  background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+  color: #fff;
+  cursor: pointer;
+}
+
+#bingoMessage {
+  margin-top: 12px;
+  font-size: 26px;
+  font-weight: 600;
+  color: var(--accent-dark);
+  opacity: 0;
+  transition: 0.6s;
+}
+
+#bingoMessage.show { opacity: 1; }
+
+canvas {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+}
+
+/* =====================
+   THEMES
+   ===================== */
+
+/* 🌸 Pastel Play */
+body.pastel {
+  --bg: linear-gradient(135deg, #fde2e4, #fadadd);
+}
+
+/* ⚡ Neon Night */
+body.neon {
+  --bg: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+  --card: #111;
+  --cell: #1b1b1b;
+  --border: #00e5ff;
+  --marked: #7c4dff;
+  --complete: #00e676;
+  --accent: #00e5ff;
+  --accent-dark: #00bcd4;
+  --text: #e0f7fa;
+  --shadow: 0 0 30px rgba(0,229,255,0.35);
+}
+
+/* 🧊 Soft Touch (Neumorphism) */
+body.soft {
+  --bg: #e0e0e0;
+  --card: #e0e0e0;
+  --cell: #e0e0e0;
+  --border: transparent;
+  --marked: #d1c4e9;
+  --complete: #b2dfdb;
+  --accent: #757575;
+  --accent-dark: #424242;
+  --text: #333;
+  --shadow: 8px 8px 16px #bebebe,
+            -8px -8px 16px #ffffff;
+}
 </style>
 </head>
-<body>
 
-<header>
-  <h1>Sumith's Bingo</h1>
-  <select id="themeSelector">
-    <option value="pastel">Pastel</option>
-    <option value="neumorphism">Neumorphism</option>
-    <option value="flat">Flat</option>
-  </select>
-</header>
+<body class="pastel">
+<div class="app">
+  <header>
+    <h1>Sumith’s Bingo</h1>
+    <select id="theme">
+      <option value="pastel">🌸 Pastel Play</option>
+      <option value="neon">⚡ Neon Night</option>
+      <option value="soft">🧊 Soft Touch</option>
+    </select>
+  </header>
 
-<div class="bingo">
-  <div class="letter" id="b">B</div>
-  <div class="letter" id="i">I</div>
-  <div class="letter" id="n">N</div>
-  <div class="letter" id="g">G</div>
-  <div class="letter" id="o">O</div>
+  <div class="bingo">
+    <div class="letter" id="b">B</div>
+    <div class="letter" id="i">I</div>
+    <div class="letter" id="n">N</div>
+    <div class="letter" id="g">G</div>
+    <div class="letter" id="o">O</div>
+  </div>
+
+  <div class="card">
+    <div class="grid" id="grid"></div>
+  </div>
+
+  <div class="controls">
+    <button onclick="generateBoard()">New Board</button>
+    <div id="bingoMessage">🎉 BINGO! 🎉</div>
+  </div>
 </div>
 
-<button onclick="generateBoard()">New Board</button>
-<div class="grid" id="grid"></div>
-<div id="bingoMessage"></div>
-
-<audio id="bingoSound" src="sound-effect-bingo-122339.mp3"></audio>
-<canvas id="confettiCanvas" class="confetti-canvas"></canvas>
+<audio id="sound" src="sound-effect-bingo-122339.mp3"></audio>
+<canvas id="confetti"></canvas>
 
 <script>
-// ===== Confetti Script =====
-function launchConfetti() {
-    const canvas = document.getElementById('confettiCanvas');
-    const ctx = canvas.getContext('2d');
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-    const confetti = [];
-    const colors = ['#ff0a54','#ff477e','#ff7096','#ff85a1','#fbb1b1','#f9bec7','#fcd5ce','#f8edeb'];
-    for(let i=0;i<150;i++){
-        confetti.push({
-            x: Math.random()*canvas.width,
-            y: Math.random()*canvas.height - canvas.height,
-            r: Math.random()*6+2,
-            d: Math.random()*0.03 + 0.02,
-            color: colors[Math.floor(Math.random()*colors.length)],
-            tilt: Math.random()*10-10,
-            tiltAngleIncrement: Math.random()*0.07+0.05
-        });
-    }
-    let angle=0;
-    function draw(){
-        ctx.clearRect(0,0,canvas.width,canvas.height);
-        confetti.forEach(c=>{
-            ctx.beginPath();
-            ctx.lineWidth = c.r;
-            ctx.strokeStyle = c.color;
-            ctx.moveTo(c.x + c.tilt + c.r/2, c.y);
-            ctx.lineTo(c.x + c.tilt, c.y + c.tilt + c.r/2);
-            ctx.stroke();
-        });
-        update();
-        requestAnimationFrame(draw);
-    }
-    function update(){
-        angle += 0.01;
-        confetti.forEach(c=>{
-            c.tiltAngle += c.tiltAngleIncrement;
-            c.y += (Math.cos(angle + c.d) + 1 + c.r/2)/2;
-            c.tilt = Math.sin(c.tiltAngle)*12;
-            if(c.y>canvas.height){c.y=-10;c.x=Math.random()*canvas.width;}
-        });
-    }
-    draw();
-    setTimeout(()=>{ctx.clearRect(0,0,canvas.width,canvas.height);},4000); // stop after 4s
+const SIZE = 5;
+let cells=[], completed=new Set(), bingo=false, audioReady=false;
+const sound=document.getElementById('sound'); sound.volume=1;
+
+document.getElementById('theme').onchange=e=>{
+  document.body.className=e.target.value;
+};
+
+function generateBoard(){
+  const g=document.getElementById('grid');
+  g.innerHTML=''; cells=[]; completed.clear(); bingo=false;
+  document.getElementById('bingoMessage').classList.remove('show');
+  document.querySelectorAll('.letter').forEach(l=>l.classList.remove('active'));
+
+  [...Array(25).keys()].map(i=>i+1).sort(()=>Math.random()-0.5).forEach(n=>{
+    const d=document.createElement('div');
+    d.className='cell'; d.textContent=n;
+    d.onclick=()=>{
+      if(!audioReady){sound.play().catch(()=>{});sound.pause();audioReady=true;}
+      d.classList.toggle('marked'); check();
+    };
+    cells.push(d); g.appendChild(d);
+  });
 }
 
-// ===== Bingo Game =====
-document.addEventListener('DOMContentLoaded', function() {
-    const SIZE = 5;
-    let cells = [];
-    let completedLines = new Set();
-    let bingoAnnounced = false;
-    let audioEnabled = false;
-    const audio = document.getElementById('bingoSound');
-    audio.volume = 1;
+function check(){
+  const lines=[];
+  for(let r=0;r<SIZE;r++) lines.push([...Array(SIZE)].map((_,c)=>r*SIZE+c));
+  for(let c=0;c<SIZE;c++) lines.push([...Array(SIZE)].map((_,r)=>r*SIZE+c));
 
-    const themeSelector = document.getElementById('themeSelector');
-    themeSelector.addEventListener('change', applyTheme);
-
-    function applyTheme(){
-        const theme = themeSelector.value;
-        if(theme==='pastel'){
-            document.documentElement.style.setProperty('--bg-color','#f2f2f2');
-            document.documentElement.style.setProperty('--card-color','#ffffff');
-            document.documentElement.style.setProperty('--cell-color','#ffffff');
-            document.documentElement.style.setProperty('--cell-hover','#e0e0e0');
-            document.documentElement.style.setProperty('--letter-color','#e53935');
-            document.documentElement.style.setProperty('--letter-bg','#ffffff');
-            document.documentElement.style.setProperty('--button-bg','#333');
-            document.documentElement.style.setProperty('--button-color','#fff');
-        } else if(theme==='neumorphism'){
-            document.documentElement.style.setProperty('--bg-color','#e0e0e0');
-            document.documentElement.style.setProperty('--card-color','#e0e0e0');
-            document.documentElement.style.setProperty('--cell-color','#e0e0e0');
-            document.documentElement.style.setProperty('--cell-hover','#d1d1d1');
-            document.documentElement.style.setProperty('--letter-color','#555');
-            document.documentElement.style.setProperty('--letter-bg','#e0e0e0');
-            document.documentElement.style.setProperty('--button-bg','#d1d1d1');
-            document.documentElement.style.setProperty('--button-color','#333');
-        } else if(theme==='flat'){
-            document.documentElement.style.setProperty('--bg-color','#fef6e4');
-            document.documentElement.style.setProperty('--card-color','#ffffff');
-            document.documentElement.style.setProperty('--cell-color','#ffcc80');
-            document.documentElement.style.setProperty('--cell-hover','#ffb74d');
-            document.documentElement.style.setProperty('--letter-color','#fff');
-            document.documentElement.style.setProperty('--letter-bg','#ff7043');
-            document.documentElement.style.setProperty('--button-bg','#ff7043');
-            document.documentElement.style.setProperty('--button-color','#fff');
-        }
+  lines.forEach((l,i)=>{
+    if(l.every(x=>cells[x].classList.contains('marked'))){
+      l.forEach(x=>cells[x].classList.add('completed'));
+      completed.add(i);
     }
-    applyTheme();
+  });
 
-    window.generateBoard = function() {
-        const grid = document.getElementById('grid');
-        grid.innerHTML = '';
-        cells = [];
-        completedLines.clear();
-        bingoAnnounced = false;
-        audioEnabled = false;
-        document.querySelectorAll('.letter').forEach(l => l.classList.remove('active'));
-        const msg = document.getElementById('bingoMessage');
-        msg.classList.remove('show');
-        msg.textContent = '';
+  ['b','i','n','g','o'].forEach((id,i)=>{
+    document.getElementById(id).classList.toggle('active', completed.size>i);
+  });
 
-        let numbers = Array.from({length:25}, (_,i)=>i+1);
-        for(let i=numbers.length-1;i>0;i--){
-            const j=Math.floor(Math.random()*(i+1)); 
-            [numbers[i],numbers[j]]=[numbers[j],numbers[i]];
-        }
+  if(completed.size>=5 && !bingo){
+    bingo=true;
+    document.getElementById('bingoMessage').classList.add('show');
+    sound.currentTime=0; sound.play().catch(()=>{});
+    confetti();
+  }
+}
 
-        numbers.forEach(num=>{
-            const div = document.createElement('div');
-            div.className='cell';
-            div.textContent=num;
-            div.addEventListener('click', ()=>{
-                if(!audioEnabled){ audio.play().catch(()=>{}); audio.pause(); audioEnabled=true; }
-                div.classList.toggle('marked'); checkCompletedLines();
-            });
-            cells.push(div);
-            grid.appendChild(div);
-        });
-    }
+function confetti(){
+  const c=document.getElementById('confetti'),ctx=c.getContext('2d');
+  c.width=innerWidth;c.height=innerHeight;
+  const p=[...Array(120)].map(()=>({
+    x:Math.random()*c.width,y:-20,r:Math.random()*6+4,
+    v:Math.random()*3+2,
+    col:['#f48fb1','#ce93d8','#b39ddb','#80cbc4','#a5d6a7'][Math.floor(Math.random()*5)]
+  }));
+  let f=0;(function a(){
+    ctx.clearRect(0,0,c.width,c.height);
+    p.forEach(o=>{o.y+=o.v;ctx.fillStyle=o.col;
+      ctx.beginPath();ctx.arc(o.x,o.y,o.r,0,7);ctx.fill();});
+    if(f++<180)requestAnimationFrame(a);
+  })();
+}
 
-    function checkCompletedLines(){
-        cells.forEach(c=>c.classList.remove('completed'));
-        let lines = [];
-        for(let r=0;r<SIZE;r++) lines.push([...Array(SIZE)].map((_,c)=>r*SIZE+c));
-        for(let c=0;c<SIZE;c++) lines.push([...Array(SIZE)].map((_,r)=>r*SIZE+c));
-
-        lines.forEach((line,index)=>{
-            if(line.every(i=>cells[i].classList.contains('marked'))){
-                line.forEach(i=>cells[i].classList.add('completed'));
-                completedLines.add(index);
-            }
-        });
-
-        updateBingoLetters();
-    }
-
-    function updateBingoLetters(){
-        ['b','i','n','g','o'].forEach((id,i)=>document.getElementById(id).classList.toggle('active', completedLines.size>i));
-        const msg = document.getElementById('bingoMessage');
-        if(completedLines.size>=5 && !bingoAnnounced){
-            bingoAnnounced=true;
-            if(audioEnabled){ audio.currentTime=0; audio.play().catch(()=>console.log("Audio blocked")); }
-            msg.textContent = "🎉 BINGO! 🎉";
-            msg.classList.add('show');
-            launchConfetti();
-        }
-    }
-
-    generateBoard();
-});
+generateBoard();
 </script>
-
 </body>
 </html>
