@@ -4,30 +4,23 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Sumith’s Bingo</title>
+
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600&display=swap" rel="stylesheet">
 
 <style>
-/* =====================
-   THEME VARIABLES
-   ===================== */
 :root {
   --bg: linear-gradient(135deg, #fde2e4, #fadadd);
   --card: #ffffff;
   --cell: #ffffff;
   --border: #e8e8e8;
-
   --marked: #e6dbff;   /* lavender */
   --complete: #c8f7dc; /* green */
-
   --accent: #f48fb1;
   --accent-dark: #ec407a;
   --text: #444;
   --shadow: 0 12px 30px rgba(0,0,0,0.08);
 }
 
-/* =====================
-   BASE LAYOUT
-   ===================== */
 body {
   margin: 0;
   font-family: 'Poppins', sans-serif;
@@ -54,16 +47,7 @@ h1 {
   color: var(--text);
 }
 
-select {
-  padding: 6px 10px;
-  border-radius: 12px;
-  border: none;
-  font-family: inherit;
-}
-
-/* =====================
-   BINGO LETTERS
-   ===================== */
+/* Bingo Letters */
 .bingo {
   display: flex;
   justify-content: center;
@@ -89,9 +73,7 @@ select {
   color: #fff;
 }
 
-/* =====================
-   CARD & GRID
-   ===================== */
+/* Card & Grid */
 .card {
   background: var(--card);
   border-radius: 20px;
@@ -130,9 +112,7 @@ select {
   background: var(--complete);
 }
 
-/* =====================
-   CONTROLS
-   ===================== */
+/* Controls */
 .controls {
   text-align: center;
   margin-top: 14px;
@@ -157,63 +137,22 @@ button {
   transition: 0.6s;
 }
 
-#bingoMessage.show { opacity: 1; }
+#bingoMessage.show {
+  opacity: 1;
+}
 
 canvas {
   position: fixed;
   inset: 0;
   pointer-events: none;
 }
-
-/* =====================
-   THEMES
-   ===================== */
-
-/* 🌸 Pastel Play */
-body.pastel {
-  --bg: linear-gradient(135deg, #fde2e4, #fadadd);
-}
-
-/* ⚡ Neon Night */
-body.neon {
-  --bg: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
-  --card: #111;
-  --cell: #1b1b1b;
-  --border: #00e5ff;
-  --marked: #7c4dff;
-  --complete: #00e676;
-  --accent: #00e5ff;
-  --accent-dark: #00bcd4;
-  --text: #e0f7fa;
-  --shadow: 0 0 30px rgba(0,229,255,0.35);
-}
-
-/* 🧊 Soft Touch (Neumorphism) */
-body.soft {
-  --bg: #e0e0e0;
-  --card: #e0e0e0;
-  --cell: #e0e0e0;
-  --border: transparent;
-  --marked: #d1c4e9;
-  --complete: #b2dfdb;
-  --accent: #757575;
-  --accent-dark: #424242;
-  --text: #333;
-  --shadow: 8px 8px 16px #bebebe,
-            -8px -8px 16px #ffffff;
-}
 </style>
 </head>
 
-<body class="pastel">
+<body>
 <div class="app">
   <header>
     <h1>Sumith’s Bingo</h1>
-    <select id="theme">
-      <option value="pastel">🌸 Pastel Play</option>
-      <option value="neon">⚡ Neon Night</option>
-      <option value="soft">🧊 Soft Touch</option>
-    </select>
   </header>
 
   <div class="bingo">
@@ -239,68 +178,129 @@ body.soft {
 
 <script>
 const SIZE = 5;
-let cells=[], completed=new Set(), bingo=false, audioReady=false;
-const sound=document.getElementById('sound'); sound.volume=1;
+let cells = [];
+let completed = new Set();
+let bingo = false;
+let audioReady = false;
 
-document.getElementById('theme').onchange=e=>{
-  document.body.className=e.target.value;
-};
+/* CONFETTI FIX */
+let confettiFrameId = null;
 
+const sound = document.getElementById('sound');
+sound.volume = 1;
+
+/* Generate Board */
 function generateBoard(){
-  const g=document.getElementById('grid');
-  g.innerHTML=''; cells=[]; completed.clear(); bingo=false;
-  document.getElementById('bingoMessage').classList.remove('show');
-  document.querySelectorAll('.letter').forEach(l=>l.classList.remove('active'));
+  stopConfetti(); // ✅ clear any existing confetti
 
-  [...Array(25).keys()].map(i=>i+1).sort(()=>Math.random()-0.5).forEach(n=>{
-    const d=document.createElement('div');
-    d.className='cell'; d.textContent=n;
-    d.onclick=()=>{
-      if(!audioReady){sound.play().catch(()=>{});sound.pause();audioReady=true;}
-      d.classList.toggle('marked'); check();
+  const grid = document.getElementById('grid');
+  grid.innerHTML = '';
+  cells = [];
+  completed.clear();
+  bingo = false;
+
+  document.getElementById('bingoMessage').classList.remove('show');
+  document.querySelectorAll('.letter').forEach(l => l.classList.remove('active'));
+
+  const nums = [...Array(25).keys()].map(i => i + 1).sort(() => Math.random() - 0.5);
+
+  nums.forEach(n => {
+    const cell = document.createElement('div');
+    cell.className = 'cell';
+    cell.textContent = n;
+
+    cell.onclick = () => {
+      if(!audioReady){
+        sound.play().catch(()=>{});
+        sound.pause();
+        audioReady = true;
+      }
+      cell.classList.toggle('marked');
+      checkBingo();
     };
-    cells.push(d); g.appendChild(d);
+
+    cells.push(cell);
+    grid.appendChild(cell);
   });
 }
 
-function check(){
-  const lines=[];
-  for(let r=0;r<SIZE;r++) lines.push([...Array(SIZE)].map((_,c)=>r*SIZE+c));
-  for(let c=0;c<SIZE;c++) lines.push([...Array(SIZE)].map((_,r)=>r*SIZE+c));
+/* Check Bingo */
+function checkBingo(){
+  const lines = [];
 
-  lines.forEach((l,i)=>{
-    if(l.every(x=>cells[x].classList.contains('marked'))){
-      l.forEach(x=>cells[x].classList.add('completed'));
+  for(let r=0;r<SIZE;r++)
+    lines.push([...Array(SIZE)].map((_,c)=>r*SIZE+c));
+
+  for(let c=0;c<SIZE;c++)
+    lines.push([...Array(SIZE)].map((_,r)=>r*SIZE+c));
+
+  lines.forEach((line, i) => {
+    if(line.every(idx => cells[idx].classList.contains('marked'))){
+      line.forEach(idx => cells[idx].classList.add('completed'));
       completed.add(i);
     }
   });
 
   ['b','i','n','g','o'].forEach((id,i)=>{
-    document.getElementById(id).classList.toggle('active', completed.size>i);
+    document.getElementById(id).classList.toggle('active', completed.size > i);
   });
 
-  if(completed.size>=5 && !bingo){
-    bingo=true;
+  if(completed.size >= 5 && !bingo){
+    bingo = true;
     document.getElementById('bingoMessage').classList.add('show');
-    sound.currentTime=0; sound.play().catch(()=>{});
+    sound.currentTime = 0;
+    sound.play().catch(()=>{});
     confetti();
   }
 }
 
+/* CONFETTI (FIXED) */
 function confetti(){
-  const c=document.getElementById('confetti'),ctx=c.getContext('2d');
-  c.width=innerWidth;c.height=innerHeight;
-  const p=[...Array(120)].map(()=>({
-    x:Math.random()*c.width,y:-20,r:Math.random()*6+4,
-    v:Math.random()*3+2,
-    col:['#f48fb1','#ce93d8','#b39ddb','#80cbc4','#a5d6a7'][Math.floor(Math.random()*5)]
+  const c = document.getElementById('confetti');
+  const ctx = c.getContext('2d');
+  c.width = innerWidth;
+  c.height = innerHeight;
+
+  const pieces = Array.from({length:120}, () => ({
+    x: Math.random()*c.width,
+    y: -20,
+    r: Math.random()*6 + 4,
+    v: Math.random()*3 + 2,
+    col: ['#f48fb1','#ce93d8','#b39ddb','#80cbc4','#a5d6a7']
+          [Math.floor(Math.random()*5)]
   }));
-  let f=0;(function a(){
+
+  let frame = 0;
+
+  function draw(){
     ctx.clearRect(0,0,c.width,c.height);
-    p.forEach(o=>{o.y+=o.v;ctx.fillStyle=o.col;
-      ctx.beginPath();ctx.arc(o.x,o.y,o.r,0,7);ctx.fill();});
-    if(f++<180)requestAnimationFrame(a);
-  })();
+    pieces.forEach(p=>{
+      p.y += p.v;
+      ctx.fillStyle = p.col;
+      ctx.beginPath();
+      ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+      ctx.fill();
+    });
+
+    if(frame++ < 180){
+      confettiFrameId = requestAnimationFrame(draw);
+    } else {
+      stopConfetti();
+    }
+  }
+
+  draw();
+}
+
+function stopConfetti(){
+  const c = document.getElementById('confetti');
+  const ctx = c.getContext('2d');
+
+  if(confettiFrameId){
+    cancelAnimationFrame(confettiFrameId);
+    confettiFrameId = null;
+  }
+  ctx.clearRect(0,0,c.width,c.height);
 }
 
 generateBoard();
